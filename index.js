@@ -2,6 +2,9 @@ const axios = require("axios").default;
 const mergeImg = require("merge-img");
 const argv = require("minimist")(process.argv.slice(2));
 
+const {endpoint} = require("./constant");
+
+//retriew arguments from the command and set default values
 const {
   greeting = "Hello",
   who = "You",
@@ -15,25 +18,10 @@ const params = { width, height, color, s: size, encoding: "binary" };
 
 const responseType = "arraybuffer";
 
-const getFirstImage = () => {
+//common function to generate two images by parameterizing the base url
+const generateImage = (url)=>{
   return axios
-    .get(`https://cataas.com/cat/says/${greeting}`, {
-      params,
-      responseType,
-    })
-    .then((response) => {
-      console.log("Received response with status:" + response.status);
-      return response.data;
-    })
-    .catch((error) => {
-      console.log("Error while fetching first image", error);
-      process.exit(1);
-    });
-};
-
-const getSecondImage = () => {
-  return axios
-    .get(`https://cataas.com/cat/says/${who}`, {
+    .get(url, {
       params,
       responseType,
     })
@@ -47,6 +35,7 @@ const getSecondImage = () => {
     });
 };
 
+//combine the above retriewed images
 const combineImages = (firstImg, secImg) => {
   return mergeImg([
     Buffer.from(firstImg, "binary"),
@@ -59,11 +48,12 @@ const combineImages = (firstImg, secImg) => {
     });
 };
 
+//create the full image by combining the images asynchronously
 const createFullImage = async () => {
   try {
     const [firstImg, secImg] = await axios.all([
-      getFirstImage(),
-      getSecondImage(),
+      generateImage(`${endpoint}/${greeting}`),
+      generateImage(`${endpoint}/${who}`),
     ]);
     await combineImages(firstImg, secImg);
   } catch (error) {
